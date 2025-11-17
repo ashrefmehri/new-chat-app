@@ -1,0 +1,212 @@
+// ------------------------------------------------------
+// Prisma Schema for Chat App (Users + Auth + Messaging)
+// ------------------------------------------------------
+
+// Generator
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+// Database
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ------------------------------------------------------
+// USER MODEL
+// ------------------------------------------------------
+model User {
+  // Basic user info
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Auth relations
+  sessions      Session[]
+  accounts      Account[]
+
+  // CHAT relations
+  conversationsCreated Conversation[] @relation("CreatedBy") // conversations where this user is the creator
+  participants          Participant[]                       // conversations this user participates in
+  messagesSent          Message[] @relation("MessageSender") // messages.thisUserSent
+  messageStatuses       MessageStatus[]                      // delivered/read status per message
+}
+
+// ------------------------------------------------------
+// SESSION MODEL (Auth)
+// ------------------------------------------------------
+model Session {
+  id         String   @id @default(cuid())
+  userId     String
+  token      String   @unique
+  expiresAt  DateTime
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ------------------------------------------------------
+// ACCOUNT MODEL (OAuth or credentials)
+// ------------------------------------------------------
+model Account {
+  id                    String   @id @default(cuid())
+  userId                String
+  accountId             String
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  idToken               String?
+  password              String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([providerId, accountId])
+}
+
+// ------------------------------------------------------
+// VERIFICATION MODEL (Email / OTP codes)
+// ------------------------------------------------------
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+// ------------------------------------------------------
+// CONVERSATION MODEL
+// A conversation between users (DIRECT or GROUP)
+// ------------------------------------------------------
+model Conversation {
+  id             String             @id @default(cuid())
+  title          String?            // For group chats
+  type           ConversationType   @default(DIRECT)
+  createdById    String             // User who started the conversation
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  lastMessageAt  DateTime?          // For sorting by activity
+
+  // Relations
+  createdBy      User               @relation("CreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  participants   Participant[]
+  messages       Message[]
+
+  @@index([lastMessageAt])
+}
+
+enum ConversationType {
+  DIRECT
+  GROUP
+}
+
+// ------------------------------------------------------
+// PARTICIPANT MODEL
+// Represents a user inside a conversation
+// ------------------------------------------------------
+model Participant {
+  id              String             @id @default(cuid())
+  conversationId  String
+  userId          String
+  role            ParticipantRole    @default(MEMBER)
+  joinedAt        DateTime           @default(now())
+  mutedUntil      DateTime?
+
+  conversation    Conversation       @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@index([userId])
+}
+
+enum ParticipantRole {
+  MEMBER
+  ADMIN
+}
+
+// ------------------------------------------------------
+// MESSAGE MODEL
+// Messages sent inside a conversation
+// ------------------------------------------------------
+model Message {
+  id               String                @id @default(cuid())
+  conversationId   String
+  senderId         String
+  content          String?               // Text content
+  contentType      MessageContentType    @default(TEXT)
+  replyToMessageId String?               // For replies
+  createdAt        DateTime              @default(now())
+  editedAt         DateTime?
+  deleted          Boolean               @default(false)
+
+  conversation     Conversation          @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender           User                  @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  attachments      Attachment[]
+  statuses         MessageStatus[]
+
+  @@index([conversationId, createdAt])
+}
+
+enum MessageContentType {
+  TEXT
+  SYSTEM
+  REPLY
+  ATTACHMENT
+}
+
+// ------------------------------------------------------
+// MESSAGE STATUS MODEL
+// Tracks delivery/read status per user per message
+// ------------------------------------------------------
+model MessageStatus {
+  id          String                  @id @default(cuid())
+  messageId   String
+  userId      String
+  status      MessageDeliveryStatus   @default(DELIVERED)
+  updatedAt   DateTime                @default(now()) @updatedAt
+
+  message     Message                 @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user        User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@index([userId])
+}
+
+enum MessageDeliveryStatus {
+  SENT
+  DELIVERED
+  READ
+}
+
+// ------------------------------------------------------
+// ATTACHMENT MODEL
+// Files/images/videos inside messages
+// ------------------------------------------------------
+model Attachment {
+  id         String    @id @default(cuid())
+  messageId  String
+  url        String
+  mimeType   String?
+  size       Int?
+  filename   String?
+  createdAt  DateTime  @default(now())
+
+  message    Message   @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+}
