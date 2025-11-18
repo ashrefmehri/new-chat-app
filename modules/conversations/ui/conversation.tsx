@@ -1,6 +1,15 @@
+"use client"
+
 import { UserAvatar } from "@/modules/user/ui/user-avatar";
+import { useTRPC } from "@/trpc/client";
+import { useQuery } from "@tanstack/react-query";
 
 export const Conversation = () => {
+
+  
+  
+
+
   return (
     <div className="hover:bg-gray-50 tracking-tighter  cursor-pointer rounded-lg px-1 py-2 ">
       <div className="flex items-center gap-3">
