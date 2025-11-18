@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Roboto } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
+import { TRPCReactProvider } from "@/trpc/client";
 
 const roboto = Roboto({
   subsets: ["latin"],
@@ -18,11 +19,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${roboto.className}  antialiased`}>
-        {children}
-        <Toaster />
-      </body>
-    </html>
+    <TRPCReactProvider>
+      <html lang="en">
+        <body className={`${roboto.className}  antialiased`}>
+          {children}
+          <Toaster />
+        </body>
+      </html>
+    </TRPCReactProvider>
   );
 }

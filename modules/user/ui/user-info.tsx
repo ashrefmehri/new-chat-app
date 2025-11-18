@@ -7,7 +7,6 @@ export const UserInfo = () => {
 
     const { data, error, isPending } = authClient.useSession();
   
-    console.log(data);
     
 
   return (

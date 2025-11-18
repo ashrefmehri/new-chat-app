@@ -5,6 +5,9 @@ import { cn } from "@/lib/utils";
 import { UserInfo } from "@/modules/user/ui/user-info";
 import { MessagesSquare } from "lucide-react";
 import { useState } from "react";
+import { useTRPC } from "@/trpc/client";
+import { useQuery } from "@tanstack/react-query";
+import { ConversationsEmptyState } from "./conversations-empty-state";
 
 const navMenu = [
   { label: "All", value: "all" },
@@ -12,8 +15,16 @@ const navMenu = [
   { label: "Groups", value: "groups" },
 ];
 
+
+
 export const CoversationsSidebar = () => {
   const [activeTab, setActiveTab] = useState("all");
+
+  
+const trpc = useTRPC();
+
+  const { data,isLoading,error } = useQuery(trpc.conversations.getAll.queryOptions());
+
 
   return (
     <div className="w-70 border p-4 tracking-tight bg-white h-full flex flex-col space-y-6 rounded-xl">
@@ -36,11 +47,11 @@ export const CoversationsSidebar = () => {
             <span className="text-[13px]  ">Messages</span>
             <MessagesSquare className="w-4 h-4"/>
         </div>
-        <Conversation/>
-        <Conversation/>
-        <Conversation/>
-        <Conversation/>
+        
       </div>
+      <div className="h-full ">
+          <ConversationsEmptyState/>
+        </div>
     </div>
   );
 };
