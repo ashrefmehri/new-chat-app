@@ -1,5 +1,6 @@
 import { EmptyState } from "@/components/empty-state"
 import { auth } from "@/lib/auth"
+import { ConversationView } from "@/modules/conversations/ui/conversation-view";
 import { headers } from "next/headers"
 import { redirect } from "next/navigation";
  const CoversationsPage = async ()=>{

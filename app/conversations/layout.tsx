@@ -9,9 +9,9 @@ export default function ConversationsLayout({
   children: React.ReactNode;
 }>) {
   return (
-      <div className="w-full h-screen flex gap-3 overflow-hidden p-4 bg-gray-100">
+      <div className="w-full h-screen flex gap-3 items-center  overflow-hidden p-4 bg-gray-100">
         <CoversationsSidebar />
-        <div className="w-full flex flex-col gap-3 h-full">
+        <div className="w-full  flex flex-col gap-3 h-full">
           <SearchBar/>
           {children}
           </div>
