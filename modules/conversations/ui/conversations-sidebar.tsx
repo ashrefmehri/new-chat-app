@@ -50,7 +50,7 @@ const trpc = useTRPC();
         
       </div>
       <div className="h-full ">
-          <ConversationsEmptyState/>
+          {!data && <ConversationsEmptyState/>}
         </div>
     </div>
   );

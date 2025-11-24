@@ -4,15 +4,28 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { MessageCircle, UserRoundX, UsersIcon } from "lucide-react";
 import { useTRPC } from "@/trpc/client";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useRouter } from "next/navigation";
 
 export const AcceptedFriends = () => {
   const trpc = useTRPC();
+  const router = useRouter()
   const { data, isLoading, error } = useQuery({
     ...trpc.friends.getAllFriends.queryOptions(),
-    refetchInterval: 1000,
   });
+
+const createConversation = useMutation({...trpc.conversations.createDirect.mutationOptions(),
+  onSuccess: (data)=>{
+    router.push(`/conversations/${data.id}`)
+
+  }
+})
+
+const handleCreateCoversation= (userId:string)=>{
+  createConversation.mutate({targetUserId: userId})
+ 
+}
 
   if (isLoading) {
     return (
@@ -80,6 +93,7 @@ export const AcceptedFriends = () => {
                 </div>
               </div>
                 <Button
+                onClick={()=>handleCreateCoversation(friend.id)}
                   size="icon"
                   className="rounded-full w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white"
                   title="Message"

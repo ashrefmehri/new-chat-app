@@ -136,4 +136,47 @@ export const conversationsRouter = createTRPCRouter({
 
       return conversation;
     }),
+
+    getById: protectedProcedure
+  .input(
+    z.object({
+      conversationId: z.string(),
+    })
+  )
+  .query(async ({ ctx, input }) => {
+    
+    const userId = ctx.auth.user.id;
+
+    // Check if the user is part of the conversation
+    const isParticipant = await prisma.participant.findFirst({
+      where: {
+        conversationId: input.conversationId,
+        userId,
+      },
+    });
+
+    if (!isParticipant) {
+      throw new Error("You are not allowed to access this conversation");
+    }
+
+    const conversation = await prisma.conversation.findUnique({
+      where: { id: input.conversationId },
+      include: {
+        participants: {
+          include: {
+            user: true,
+          },
+        },
+        messages: {
+          include: {
+            sender: true,
+          },
+          orderBy: { createdAt: "desc" },
+          take: 30,
+        },
+      },
+    });
+
+    return conversation;
+  }),
 });

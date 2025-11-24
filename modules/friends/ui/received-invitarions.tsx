@@ -31,7 +31,6 @@ export const ReceivedInvitations = () => {
 
   const { data, isLoading, error } = useQuery({
     ...trpc.friends.getAll.queryOptions(),
-    refetchInterval: 1000,
   });
 
   const onAccept = (id: string) => {
